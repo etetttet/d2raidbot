@@ -1,4 +1,4 @@
-﻿import discord
+import discord
 from discord import app_commands
 import json
 from typing import Optional
@@ -27,7 +27,8 @@ slot = 6
 caller = str
 desc = str
 
-@tree.command(name="raid", description="掠奪喊團")
+
+@tree.command(name="raid", description="掠奪喊團", guild=discord.Object(id=718495741730881586))
 @app_commands.choices(掠奪=[
     app_commands.Choice(name="國王殞落", value="國王殞落"),
     app_commands.Choice(name="門徒之誓", value="門徒之誓"),
@@ -71,10 +72,10 @@ async def raid(interaction: discord.Interaction,
         desc = ''
     elif not 備註 is None:
         desc = 備註
-        
+
     slot = slot - len(formallist)
-    await interaction.response.send_message(f"活動: {掠奪.value} -{slot}"'\n'
-                                            f"時間: {時間}"'\n'
+    await interaction.response.send_message(f"活動: {raidname} -{slot}"'\n'
+                                            f"時間: {raidtime}"'\n'
                                             f"人員: {' '.join(formallist)}"'\n'
                                             f"候補: {' '.join(sublist)}"'\n'
                                             f"備註: {desc}"
@@ -84,8 +85,8 @@ async def raid(interaction: discord.Interaction,
 @client.event
 async def on_message(msg):
     if "活動" in msg.content:
-        await msg.add_reaction("<:kao:1018949565287759884>")
-        await msg.add_reaction("<:spare:1020235494182883339>")
+        await msg.add_reaction("<:kao:1018814305774342155>")
+        await msg.add_reaction("<:spare:1020235607420706816>")
         await msg.add_reaction("❌")
 
 
@@ -99,18 +100,18 @@ async def on_reaction_add(reaction, user):
     global slot
     global caller
     global desc
-    
+
     if user == client.user:
         return
 
-    channel = await client.fetch_channel('1018958415416021073')
+    channel = await client.fetch_channel('1020775231670976523')
     message = await channel.fetch_message(reaction.message.id)
 
     if reaction.emoji == "❌":
         if user == caller:
             await message.delete()
 
-    if str(reaction.emoji) == "<:kao:1018949565287759884>":
+    if str(reaction.emoji) == "<:kao:1018814305774342155>":
         slot = slot - 1
         if slot <= 0:
             return
@@ -122,7 +123,7 @@ async def on_reaction_add(reaction, user):
                            f"備註: {desc}"
                            )
 
-    if str(reaction.emoji) == "<:spare:1020235494182883339>":
+    if str(reaction.emoji) == "<:spare:1020235607420706816>":
         slot = slot
         sublist.extend([user.mention])
         await message.edit(content=f"活動: {raidname} -{slot}"'\n'
@@ -142,13 +143,13 @@ async def on_reaction_remove(reaction, user):
     global sublist
     global slot
     global desc
-    
+
     if user == client.user:
         return
-    channel = await client.fetch_channel('1018958415416021073')
+    channel = await client.fetch_channel('1020775231670976523')
     message = await channel.fetch_message(reaction.message.id)
 
-    if str(reaction.emoji) == "<:kao:1018949565287759884>":
+    if str(reaction.emoji) == "<:kao:1018814305774342155>":
         slot = slot + 1
         formallist.remove(user.mention)
         await message.edit(content=f"活動: {raidname} -{slot}"'\n'
@@ -158,7 +159,7 @@ async def on_reaction_remove(reaction, user):
                            f"備註: {desc}"
                            )
 
-    if str(reaction.emoji) == "<:spare:1020235494182883339>":
+    if str(reaction.emoji) == "<:spare:1020235607420706816>":
         slot = slot
         sublist.remove(user.mention)
         await message.edit(content=f"活動: {raidname} -{slot}"'\n'
