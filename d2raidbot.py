@@ -3,10 +3,6 @@ from discord import app_commands
 import json
 from typing import Optional
 
-# with open('data.json', 'r', encoding='utf8') as data:
-#     jdata = json.load(data)
-
-
 class aclient(discord.Client):
     def __init__(self):
         super().__init__(intents=discord.Intents.all())
@@ -29,7 +25,7 @@ formallist = []
 sublist = []
 slot = 6
 caller = str
-
+desc = str
 
 @tree.command(name="raid", description="掠奪喊團", guild=discord.Object(id=1020775231670976523))
 @app_commands.choices(掠奪=[
@@ -45,7 +41,8 @@ async def raid(interaction: discord.Interaction,
                掠奪: app_commands.Choice[str],
                時間: str = '滿人就打',
                正選: Optional[str] = None,
-               候補: Optional[str] = None
+               候補: Optional[str] = None,
+               備註: Optional[str] = None
                ):
     global raidname
     global raidtime
@@ -53,6 +50,7 @@ async def raid(interaction: discord.Interaction,
     global sublist
     global slot
     global caller
+    global desc
 
     raidname = 掠奪.value
     raidtime = 時間
@@ -69,12 +67,17 @@ async def raid(interaction: discord.Interaction,
         sublist = []
     elif not 候補 is None:
         sublist.append([候補])
-
+    if 備註 is None:
+        desc = ''
+    elif not 備註 is None:
+        desc = 備註
+        
     slot = slot - len(formallist)
     await interaction.response.send_message(f"活動: {掠奪.value} -{slot}"'\n'
                                             f"時間: {時間}"'\n'
                                             f"人員: {' '.join(formallist)}"'\n'
-                                            f"候補: {' '.join(sublist)}"
+                                            f"候補: {' '.join(sublist)}"'\n'
+                                            f"備註: {desc}"
                                             )
 
 
@@ -95,7 +98,8 @@ async def on_reaction_add(reaction, user):
     global sublist
     global slot
     global caller
-
+    global desc
+    
     if user == client.user:
         return
 
@@ -114,7 +118,8 @@ async def on_reaction_add(reaction, user):
         await message.edit(content=f"活動: {raidname} -{slot}"'\n'
                            f"時間: {raidtime}"'\n'
                            f"人員: {' '.join(formallist)}"'\n'
-                           f"候補: {' '.join(sublist)}"
+                           f"候補: {' '.join(sublist)}"'\n'
+                           f"備註: {desc}"
                            )
 
     if str(reaction.emoji) == "<:spare:1020235494182883339>":
@@ -123,7 +128,8 @@ async def on_reaction_add(reaction, user):
         await message.edit(content=f"活動: {raidname} -{slot}"'\n'
                            f"時間: {raidtime}"'\n'
                            f"人員: {' '.join(formallist)}"'\n'
-                           f"候補: {' '.join(sublist)}"
+                           f"候補: {' '.join(sublist)}"'\n'
+                           f"備註: {desc}"
                            )
 
 
@@ -135,7 +141,8 @@ async def on_reaction_remove(reaction, user):
     global formallist
     global sublist
     global slot
-
+    global desc
+    
     if user == client.user:
         return
     channel = await client.fetch_channel('1018958415416021073')
@@ -147,7 +154,8 @@ async def on_reaction_remove(reaction, user):
         await message.edit(content=f"活動: {raidname} -{slot}"'\n'
                            f"時間: {raidtime}"'\n'
                            f"人員: {' '.join(formallist)}"'\n'
-                           f"候補: {' '.join(sublist)}"
+                           f"候補: {' '.join(sublist)}"'\n'
+                           f"備註: {desc}"
                            )
 
     if str(reaction.emoji) == "<:spare:1020235494182883339>":
@@ -156,8 +164,8 @@ async def on_reaction_remove(reaction, user):
         await message.edit(content=f"活動: {raidname} -{slot}"'\n'
                            f"時間: {raidtime}"'\n'
                            f"人員: {' '.join(formallist)}"'\n'
-                           f"候補: {' '.join(sublist)}"
+                           f"候補: {' '.join(sublist)}"'\n'
+                           f"備註: {desc}"
                            )
 
-# client.run(jdata['OKEN'])
 client.run(TOKEN)
