@@ -27,7 +27,7 @@ slot = 6
 caller = str
 desc = str
 
-@tree.command(name="raid", description="掠奪喊團", guild=discord.Object(id=1020775231670976523))
+@tree.command(name="raid", description="掠奪喊團")
 @app_commands.choices(掠奪=[
     app_commands.Choice(name="國王殞落", value="國王殞落"),
     app_commands.Choice(name="門徒之誓", value="門徒之誓"),
