@@ -1,7 +1,11 @@
 import discord
-from discord import app_commands
+from discord import app_commands, Embed
 import json
 from typing import Optional
+
+# with open('data.json', 'r', encoding='utf8') as data:
+#     jdata = json.load(data)
+
 
 class aclient(discord.Client):
     def __init__(self):
@@ -11,7 +15,7 @@ class aclient(discord.Client):
     async def on_ready(self):
         await self.wait_until_ready()
         if not self.synced:
-            await tree.sync(guild=discord.Object(id=718495741730881586))
+            await tree.sync(guild=discord.Object(id=1015251187278282793))
         self.synced = True
         print("Bot is ON now")
 
@@ -19,154 +23,188 @@ class aclient(discord.Client):
 client = aclient()
 tree = app_commands.CommandTree(client)
 
-raidname = str
-raidtime = str
-formallist = []
-sublist = []
-slot = 6
-caller = str
-desc = str
 
-
-@tree.command(name="raid", description="掠奪喊團", guild=discord.Object(id=718495741730881586))
-@app_commands.choices(掠奪=[
-    app_commands.Choice(name="國王殞落", value="國王殞落"),
-    app_commands.Choice(name="門徒之誓", value="門徒之誓"),
-    app_commands.Choice(name="玻璃寶庫", value="玻璃寶庫"),
-    app_commands.Choice(name="深石地窖", value="深石地窖"),
-    app_commands.Choice(name="救贖花園", value="救贖花園"),
-    app_commands.Choice(name="最後遺願", value="最後遺願")
-])
-# async def raid(interaction: discord.Interaction,
+@tree.command(name="raid", description="掠奪喊團", guild=discord.Object(id=1015251187278282793))
+@app_commands.choices(掠奪=[app_commands.Choice(name="國王殞落", value="國王殞落"),
+                          app_commands.Choice(name="門徒之誓", value="門徒之誓"),
+                          app_commands.Choice(name="玻璃寶庫", value="玻璃寶庫"),
+                          app_commands.Choice(name="深石地窖", value="深石地窖"),
+                          app_commands.Choice(name="救贖花園", value="救贖花園"),
+                          app_commands.Choice(name="最後遺願", value="最後遺願")
+                          ])
 async def raid(interaction: discord.Interaction,
                掠奪: app_commands.Choice[str],
                時間: str = '滿人就打',
                正選: Optional[str] = None,
                候補: Optional[str] = None,
-               備註: Optional[str] = None
+               備註: Optional[str] = '全通'
                ):
-    global raidname
-    global raidtime
-    global formallist
-    global sublist
-    global slot
-    global caller
-    global desc
-
-    raidname = 掠奪.value
-    raidtime = 時間
-    caller = interaction.user
-
+    formalteam = []
     if 正選 is None:
-        正選 = ''
-        formallist.append(caller.mention)
-    elif not 正選 is None:
-        formallist.append(caller.mention)
-        formallist.extend([正選])
-    if 候補 is None:
-        候補 = ''
-        sublist = []
-    elif not 候補 is None:
-        sublist.append([候補])
-    if 備註 is None:
-        desc = ''
-    elif not 備註 is None:
-        desc = 備註
+        formalteam.append(interaction.user.mention)
+        slot = 5
+        team = ' '.join(formalteam)
+    else:
+        formalteam.append(interaction.user.mention)
+        list = 正選.split()
+        formalteam.extend(list)
+        slot = 6 - len(formalteam)
+        team = ' '.join(formalteam)
 
-    slot = slot - len(formallist)
-    await interaction.response.send_message(f"活動: {raidname} -{slot}"'\n'
-                                            f"時間: {raidtime}"'\n'
-                                            f"人員: {' '.join(formallist)}"'\n'
-                                            f"候補: {' '.join(sublist)}"'\n'
-                                            f"備註: {desc}"
-                                            )
+    if 候補 is None:
+        候補 = ['\u200b']
+        sub = ' '.join(候補)
+    else:
+        候補 = [候補]
+        sub = ' '.join(候補)
+
+    raidinfo = Embed(title=interaction.user, color=0x00ff00)
+    raidinfo.add_field(name=掠奪.value, value=備註, inline=True)
+    # raidinfo.add_field(name="空位", value=slot, inline=True)
+    raidinfo.add_field(name="時間", value=時間, inline=False)
+    raidinfo.add_field(name="人員", value=team, inline=False)
+    raidinfo.add_field(name="候補", value=sub, inline=False)
+    await interaction.response.send_message(embed=raidinfo)
+    print(f"{interaction.user} created raid of {掠奪.value}")
 
 
 @client.event
 async def on_message(msg):
-    if "活動" in msg.content:
-        await msg.add_reaction("<:kao:1018814305774342155>")
-        await msg.add_reaction("<:spare:1020235607420706816>")
+    if msg.author == client.user:
+        await msg.add_reaction("<:kao:1018949565287759884>")
+        await msg.add_reaction("<:spare:1020235494182883339>")
         await msg.add_reaction("❌")
 
 
 @client.event
-async def on_reaction_add(reaction, user):
+async def on_raw_reaction_add(payload):
 
-    global raidname
-    global raidtime
-    global formallist
-    global sublist
-    global slot
-    global caller
-    global desc
+    channel = client.get_channel(payload.channel_id)
+    message = await channel.fetch_message(payload.message_id)
+    user = client.get_user(payload.user_id)
+    member = payload.member
 
-    if user == client.user:
+    def goto_sub(user):
+        embed = message.embeds[0]
+        embed_to_dict = embed.to_dict()
+        for field in embed_to_dict['fields']:
+            if field['name'] == '候補':
+                if field['value'] == '\u200b':
+                    sub = []
+                    sub.append(user.mention)
+                    field['value'] = ' '.join(sub)
+                    dict_to_embed = Embed.from_dict(embed_to_dict)
+                    return dict_to_embed
+                else:
+                    sub = field['value'].split()
+                    sub.append(user.mention)
+                    field['value'] = ' '.join(sub)
+                    dict_to_embed = Embed.from_dict(embed_to_dict)
+                    return dict_to_embed
+
+    if member == client.user:
         return
 
-    channel = await client.fetch_channel('1020775231670976523')
-    message = await channel.fetch_message(reaction.message.id)
-
-    if reaction.emoji == "❌":
-        if user == caller:
+    if str(payload.emoji) == "❌":
+        embed = message.embeds[0]
+        embed_to_dict = embed.to_dict()
+        if embed_to_dict['title'] == str(member):
             await message.delete()
+        else:
+            for field in embed_to_dict['fields']:
+                if field['name'] == '人員':
+                    fml_remove = field['value'].split()
+                    fml_remove.remove(user.mention)
+                    if not len(fml_remove) == 0:
+                        field['value'] = ' '.join(fml_remove)
+                        dict_to_embed = Embed.from_dict(embed_to_dict)
+                        await message.edit(embed=dict_to_embed)
+                    else:
+                        field['value'] = '\u200b'
+                        dict_to_embed = Embed.from_dict(embed_to_dict)
+                        await message.edit(embed=dict_to_embed)
+                # if field['name'] == '空位':
+                #     if int(field['value']) < 6:
+                #         field['value'] = int(field['value']) + 1
+                #         slot_to_embed = Embed.from_dict(embed_to_dict)
+                #         await message.edit(embed=slot_to_embed)
 
-    if str(reaction.emoji) == "<:kao:1018814305774342155>":
-        slot = slot - 1
-        if slot <= 0:
-            return
-        formallist.extend([user.mention])
-        await message.edit(content=f"活動: {raidname} -{slot}"'\n'
-                           f"時間: {raidtime}"'\n'
-                           f"人員: {' '.join(formallist)}"'\n'
-                           f"候補: {' '.join(sublist)}"'\n'
-                           f"備註: {desc}"
-                           )
+    if str(payload.emoji) == "<:kao:1018949565287759884>":
+        embed = message.embeds[0]
+        embed_to_dict = embed.to_dict()
+        for field in embed_to_dict['fields']:
+            if field['name'] == '人員':
+                fml_add = field['value'].split()
+                if not user.mention in fml_add:
+                    if field['value'] == '\u200b':
+                        fml_add.append(user.mention)
+                        fml_add.remove('\u200b')
+                        field['value'] = ' '.join(fml_add)
+                        dict_to_embed = Embed.from_dict(embed_to_dict)
+                        await message.edit(embed=dict_to_embed)
+                    else:
+                        fml_add.append(user.mention)
+                        field['value'] = ' '.join(fml_add)
+                        dict_to_embed = Embed.from_dict(embed_to_dict)
+                        await message.edit(embed=dict_to_embed)
+                else:
+                    pass
 
-    if str(reaction.emoji) == "<:spare:1020235607420706816>":
-        slot = slot
-        sublist.extend([user.mention])
-        await message.edit(content=f"活動: {raidname} -{slot}"'\n'
-                           f"時間: {raidtime}"'\n'
-                           f"人員: {' '.join(formallist)}"'\n'
-                           f"候補: {' '.join(sublist)}"'\n'
-                           f"備註: {desc}"
-                           )
+            # if field['name'] == '空位':
+            #     if int(field['value']) > 0:
+            #         field['value'] = int(field['value']) - 1
+            #         slot_to_embed = Embed.from_dict(embed_to_dict)
+            #         await message.edit(embed=slot_to_embed)
+            #     else:
+            #         pass
+
+    if str(payload.emoji) == "<:spare:1020235494182883339>":
+        dict_to_embed = goto_sub(user)
+        await message.edit(embed=dict_to_embed)
 
 
 @client.event
-async def on_reaction_remove(reaction, user):
+async def on_raw_reaction_remove(payload):
 
-    global raidname
-    global raidtime
-    global formallist
-    global sublist
-    global slot
-    global desc
+    channel = client.get_channel(payload.channel_id)
+    message = await channel.fetch_message(payload.message_id)
+    user = client.get_user(payload.user_id)
 
-    if user == client.user:
-        return
-    channel = await client.fetch_channel('1020775231670976523')
-    message = await channel.fetch_message(reaction.message.id)
+    if str(payload.emoji) == "<:kao:1018949565287759884>":
+        embed = message.embeds[0]
+        embed_to_dict = embed.to_dict()
+        for field in embed_to_dict['fields']:
+            if field['name'] == '人員':
+                fml_remove = field['value'].split()
+                fml_remove.remove(user.mention)
+                if not len(fml_remove) == 0:
+                    field['value'] = ' '.join(fml_remove)
+                    dict_to_embed = Embed.from_dict(embed_to_dict)
+                    await message.edit(embed=dict_to_embed)
+                else:
+                    field['value'] = '\u200b'
+                    dict_to_embed = Embed.from_dict(embed_to_dict)
+                    await message.edit(embed=dict_to_embed)
+            # if field['name'] == '空位':
+            #     if int(field['value']) < 6:
+            #         field['value'] = int(field['value']) + 1
+            #         slot_to_embed = Embed.from_dict(embed_to_dict)
+            #         await message.edit(embed=slot_to_embed)
+            #     else:
+            #         pass
 
-    if str(reaction.emoji) == "<:kao:1018814305774342155>":
-        slot = slot + 1
-        formallist.remove(user.mention)
-        await message.edit(content=f"活動: {raidname} -{slot}"'\n'
-                           f"時間: {raidtime}"'\n'
-                           f"人員: {' '.join(formallist)}"'\n'
-                           f"候補: {' '.join(sublist)}"'\n'
-                           f"備註: {desc}"
-                           )
+    if str(payload.emoji) == "<:spare:1020235494182883339>":
+        embed = message.embeds[0]
+        embed_to_dict = embed.to_dict()
+        for field in embed_to_dict['fields']:
+            if field['name'] == '候補':
+                sub = field['value'].split()
+                sub.remove(user.mention)
+                if len(sub) == 0:
+                    field['value'] = '\u200b'
+                    dict_to_embed = Embed.from_dict(embed_to_dict)
+                    await message.edit(embed=dict_to_embed)
 
-    if str(reaction.emoji) == "<:spare:1020235607420706816>":
-        slot = slot
-        sublist.remove(user.mention)
-        await message.edit(content=f"活動: {raidname} -{slot}"'\n'
-                           f"時間: {raidtime}"'\n'
-                           f"人員: {' '.join(formallist)}"'\n'
-                           f"候補: {' '.join(sublist)}"'\n'
-                           f"備註: {desc}"
-                           )
-
-client.run(TOKEN)
+# client.run(jdata['TOKEN'])
+client.run(token)
+# client.run(TOKEN)
