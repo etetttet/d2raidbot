@@ -2,6 +2,9 @@ import discord
 from discord import app_commands, Embed
 from typing import Optional
 
+emoji_kao = "<:kao:1018814305774342155>"
+emoji_sub = "<:spare:1020235607420706816>"
+
 class aclient(discord.Client):
     def __init__(self):
         super().__init__(intents=discord.Intents.all())
@@ -10,24 +13,23 @@ class aclient(discord.Client):
     async def on_ready(self):
         await self.wait_until_ready()
         if not self.synced:
-            await tree.sync(guild=discord.Object(id=ID))
+            await tree.sync(guild=discord.Object(id='Your Discord Channel ID'))
         self.synced = True
         print("Bot is ON now")
 
 
 client = aclient()
 tree = app_commands.CommandTree(client)
-emoji_kao = "<:kao:1018949565287759884>"
-emoji_sub = "<:spare:1020235494182883339>"
 
-@tree.command(name="raid", description="掠奪喊團", guild=discord.Object(id=ID))
-@ app_commands.choices(掠奪=[app_commands.Choice(name="國王殞落", value="國王殞落"),
-                           app_commands.Choice(name="門徒之誓", value="門徒之誓"),
-                           app_commands.Choice(name="玻璃寶庫", value="玻璃寶庫"),
-                           app_commands.Choice(name="深石地窖", value="深石地窖"),
-                           app_commands.Choice(name="救贖花園", value="救贖花園"),
-                           app_commands.Choice(name="最後遺願", value="最後遺願")
-                           ])
+
+@tree.command(name="raid", description="掠奪喊團", guild=discord.Object(id='Your Discord Channel ID'))
+@app_commands.choices(掠奪=[app_commands.Choice(name="國王殞落", value="國王殞落"),
+                          app_commands.Choice(name="門徒之誓", value="門徒之誓"),
+                          app_commands.Choice(name="玻璃寶庫", value="玻璃寶庫"),
+                          app_commands.Choice(name="深石地窖", value="深石地窖"),
+                          app_commands.Choice(name="救贖花園", value="救贖花園"),
+                          app_commands.Choice(name="最後遺願", value="最後遺願")
+                          ])
 async def raid(interaction: discord.Interaction,
                掠奪: app_commands.Choice[str],
                時間: str = '滿人就打',
@@ -35,7 +37,7 @@ async def raid(interaction: discord.Interaction,
                候補: Optional[str] = None,
                備註: Optional[str] = '全通'
                ):
-    if interaction.channel.id == CHANNEL:
+    if interaction.channel.id == 'Your Text Channel ID':
         formalteam = []
         if 正選 is None:
             formalteam.append(interaction.user.mention)
@@ -62,9 +64,10 @@ async def raid(interaction: discord.Interaction,
         raidinfo.add_field(name="人員", value=team, inline=False)
         raidinfo.add_field(name="候補", value=sub, inline=False)
         await interaction.response.send_message(embed=raidinfo)
+        print(f"{interaction.user} created a raid of {掠奪.value}")
 
 
-@ client.event
+@client.event
 async def on_message(msg):
     if msg.author == client.user:
         await msg.add_reaction(emoji_kao)
@@ -72,7 +75,7 @@ async def on_message(msg):
         await msg.add_reaction("❌")
 
 
-@ client.event
+@client.event
 async def on_raw_reaction_add(payload):
 
     channel = client.get_channel(payload.channel_id)
@@ -224,4 +227,4 @@ async def on_raw_reaction_remove(payload):
                     dict_to_embed = Embed.from_dict(embed_to_dict)
                     await message.edit(embed=dict_to_embed)
 
-client.run(token)
+client.run('Your Own Token')
